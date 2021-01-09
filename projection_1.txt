@@ -1,0 +1,31 @@
+from osgeo import gdal
+from osgeo import osr
+import osr
+
+dataset = gdal.Open("D:\CE2_GRAS_DEM_20m_C001_63N165W_A.tif") #读入影像文件
+nXSize , nYSize = dataset.RasterXSize , dataset.RasterYSize #影像列数，行数
+
+# trans 是一个Tuple类型的变量包含6个元素，[trans[0]，trans[3]] 是影像左上角像素的左上角点坐标，前者为经度方向的投影坐标，后者为纬度方向的投影坐标
+# trans[1] 表示像素宽度 ，trans[5] 表示像素高度
+trans = dataset.GetGeoTransform()
+prosrs = osr.SpatialReference()
+prosrs.ImportFromWkt(dataset.GetProjection()) # GetProjection()获取数据集的投影信息
+geosrs = prosrs.CloneGeogCS() #读取投影的地理基准，用于和地理坐标进行转换
+
+col = 0 # [图像坐标]像素所在列
+row = 0 # [图像坐标]像素所在行
+
+px = trans[0] + col*trans[1] + row*trans[2] # 该点在经度方向的投影坐标
+py = trans[3] + col*trans[4] + row*trans[5] # 该点在维度方向的投影坐标
+
+ct = osr.CoordinateTransformation(prosrs, geosrs) # 表示从投影坐标系映射到地理坐标系
+coords = ct.TransformPoint(px,py) # coords 是一个Tuple类型的变量包含3个元素，coords [0]为纬度，coords [1]为经度，coords [2]为高度
+
+lat = coords[0] # 【经纬度坐标】纬度
+lon = coords[1] # 【经纬度坐标】经度'''
+
+print('图上坐标 -> 投影坐标：')
+print('(%s, %s)->(%s, %s)' % (row, col, px, py))
+
+print('投影坐标 -> 经纬度：')
+print('(%s, %s)->(%s, %s)' % (px, py, coords[0], coords[1]))
